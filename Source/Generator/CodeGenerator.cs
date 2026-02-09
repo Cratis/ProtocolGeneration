@@ -101,8 +101,8 @@ class CodeGenerator
 
         var usingDirectives = new[]
         {
-            "ProtoBuf.Grpc",
             "System.Collections.Generic",
+            "System.ServiceModel",
             "System.Threading.Tasks"
         }.Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
 

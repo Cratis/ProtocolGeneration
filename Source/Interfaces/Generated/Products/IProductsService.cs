@@ -1,8 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using ProtoBuf.Grpc;
 using System.Collections.Generic;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace Interfaces.Products
