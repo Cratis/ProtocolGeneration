@@ -10,15 +10,15 @@ namespace Interfaces.Orders
     [ServiceContract]
     public interface IOrdersService
     {
-        [OperationContract(1)]
+        [OperationContract]
         Task<CommandResult> CancelOrder(CancelOrder command);
-        [OperationContract(2)]
+        [OperationContract]
         Task<Order> GetOrder(GetOrder command);
-        [OperationContract(3)]
+        [OperationContract]
         Task<IEnumerable<Order>> GetOrders(GetOrders command);
-        [OperationContract(4)]
+        [OperationContract]
         IAsyncEnumerable<Order> GetOrderUpdates(GetOrderUpdates command);
-        [OperationContract(5)]
+        [OperationContract]
         Task<CommandResult> PlaceOrder(PlaceOrder command);
     }
 }

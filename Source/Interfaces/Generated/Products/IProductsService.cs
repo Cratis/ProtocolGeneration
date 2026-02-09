@@ -10,15 +10,15 @@ namespace Interfaces.Products
     [ServiceContract]
     public interface IProductsService
     {
-        [OperationContract(1)]
+        [OperationContract]
         Task<CommandResult> CreateProduct(CreateProduct command);
-        [OperationContract(2)]
+        [OperationContract]
         Task<Product> GetProduct(GetProduct command);
-        [OperationContract(3)]
+        [OperationContract]
         Task<IEnumerable<Product>> GetProducts(GetProducts command);
-        [OperationContract(4)]
+        [OperationContract]
         IAsyncEnumerable<Product> GetProductUpdates(GetProductUpdates command);
-        [OperationContract(5)]
+        [OperationContract]
         Task<CommandResult> UpdateProductPrice(UpdateProductPrice command);
     }
 }

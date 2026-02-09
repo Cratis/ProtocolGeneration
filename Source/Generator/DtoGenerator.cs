@@ -284,12 +284,6 @@ class DtoGenerator
             });
         }
 
-        // Don't generate DTOs with no properties
-        if (properties.Count == 0)
-        {
-            return null;
-        }
-
         return new DtoDefinition
         {
             ClassName = type.Name,

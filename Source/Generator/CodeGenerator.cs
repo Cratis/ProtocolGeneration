@@ -84,14 +84,7 @@ class CodeGenerator
                 .AddAttributeLists(
                     SyntaxFactory.AttributeList(
                         SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Attribute(
-                                SyntaxFactory.ParseName("OperationContract"),
-                                SyntaxFactory.AttributeArgumentList(
-                                    SyntaxFactory.SingletonSeparatedList(
-                                        SyntaxFactory.AttributeArgument(
-                                            SyntaxFactory.LiteralExpression(
-                                                SyntaxKind.NumericLiteralExpression,
-                                                SyntaxFactory.Literal(operation.OperationNumber)))))))))
+                            SyntaxFactory.Attribute(SyntaxFactory.ParseName("OperationContract")))))
                 .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
             interfaceDeclaration = interfaceDeclaration.AddMembers(method);
