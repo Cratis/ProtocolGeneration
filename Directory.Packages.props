@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- gRPC and Protobuf -->
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.2.5" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
