@@ -3,11 +3,9 @@
 
 using System.Runtime.Serialization;
 
-namespace Interfaces.Products
-{
-    /// <summary>Data transfer object for GetProducts.</summary>
+namespace Interfaces.Products;
+/// <summary>Data transfer object for GetProducts.</summary>
 [DataContract]
-    public class GetProducts
-    {
-    }
+public class GetProducts
+{
 }

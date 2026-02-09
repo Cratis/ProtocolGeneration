@@ -4,22 +4,20 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Interfaces.Orders
-{
-    /// <summary>Data transfer object for Order.</summary>
+namespace Interfaces.Orders;
+/// <summary>Data transfer object for Order.</summary>
 [DataContract]
-    public class Order
-    {
-            /// <summary>Gets or sets the Id.</summary>
-    [DataMember(Order = 1)]
-        public Guid Id { get; set; }
+public class Order
+{
+    /// <summary>Gets or sets the Id.</summary>
+[DataMember(Order = 1)]
+    public Guid Id { get; set; }
 
-            /// <summary>Gets or sets the ProductId.</summary>
-    [DataMember(Order = 2)]
-        public Guid ProductId { get; set; }
+    /// <summary>Gets or sets the ProductId.</summary>
+[DataMember(Order = 2)]
+    public Guid ProductId { get; set; }
 
-            /// <summary>Gets or sets the Quantity.</summary>
-    [DataMember(Order = 3)]
-        public int Quantity { get; set; }
-    }
+    /// <summary>Gets or sets the Quantity.</summary>
+[DataMember(Order = 3)]
+    public int Quantity { get; set; }
 }

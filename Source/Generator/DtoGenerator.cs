@@ -141,8 +141,19 @@ sealed class DtoGenerator
         var order = 1;
         foreach (var property in dto.Properties)
         {
+            // Make reference types nullable
+            var typeName = property.TransformedTypeName;
+            var isValueType = property.OriginalType.IsValueType || typeName == "int" || typeName == "decimal" || typeName == "bool" || typeName == "Guid";
+            var isOneOf = typeName.Contains("OneOf");
+            var isSerializableDateTimeOffset = typeName.Contains("SerializableDateTimeOffset");
+
+            if ((!isValueType && !typeName.EndsWith('?')) || isOneOf || isSerializableDateTimeOffset)
+            {
+                typeName += "?";
+            }
+
             var propertyDeclaration = SyntaxFactory.PropertyDeclaration(
-                SyntaxFactory.ParseTypeName(property.TransformedTypeName),
+                SyntaxFactory.ParseTypeName(typeName),
                 property.Name)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddAttributeLists(
@@ -172,7 +183,7 @@ sealed class DtoGenerator
                         SyntaxKind.SingleLineDocumentationCommentTrivia,
                         SyntaxFactory.List(new XmlNodeSyntax[]
                         {
-                            SyntaxFactory.XmlText("    /// "),
+                            SyntaxFactory.XmlText("/// "),
                             SyntaxFactory.XmlElement(
                                 SyntaxFactory.XmlElementStartTag(SyntaxFactory.XmlName("summary")),
                                 SyntaxFactory.XmlElementEndTag(SyntaxFactory.XmlName("summary")))
@@ -181,7 +192,7 @@ sealed class DtoGenerator
                                     {
                                         SyntaxFactory.XmlText($"Gets or sets the {property.Name}.")
                                     })),
-                            SyntaxFactory.XmlText("\n    ")
+                            SyntaxFactory.XmlText("\n")
                         }))));
 
             propertyDeclaration = propertyDeclaration.WithLeadingTrivia(propXmlTrivia);
@@ -191,29 +202,43 @@ sealed class DtoGenerator
         namespaceDeclaration = namespaceDeclaration.AddMembers(classDeclaration);
 
         // Add using directives
-        var usingDirectives = new HashSet<string>
-        {
-            "System.Runtime.Serialization"
-        };
+        var systemUsings = new List<string> { "System.Runtime.Serialization" };
+        var projectUsings = new List<string>();
 
         // Add conditional usings based on what types are used
         if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("SerializableDateTimeOffset") || p.TransformedTypeName.Contains("OneOf")))
         {
-            usingDirectives.Add("Interfaces.Primitives");
+            projectUsings.Add("Interfaces.Primitives");
         }
 
         if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("IEnumerable") || p.TransformedTypeName.Contains("List")))
         {
-            usingDirectives.Add("System.Collections.Generic");
+            systemUsings.Add("System.Collections.Generic");
         }
 
         if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("Guid")))
         {
-            usingDirectives.Add("System");
+            systemUsings.Add("System");
         }
 
+        // Combine and order: System usings first, then project usings
+        var allUsings = systemUsings.Distinct().Order()
+            .Concat(projectUsings.Distinct().Order())
+            .Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)))
+            .ToArray();
+
+        // Add blank line before the class declaration
+        var classWithBlankLine = classDeclaration.WithLeadingTrivia(
+            SyntaxFactory.TriviaList(
+                SyntaxFactory.CarriageReturnLineFeed)
+            .AddRange(classDeclaration.GetLeadingTrivia()));
+
+        namespaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
+            SyntaxFactory.ParseName(dto.Namespace))
+            .AddMembers(classWithBlankLine);
+
         var compilationUnit = SyntaxFactory.CompilationUnit()
-            .AddUsings(usingDirectives.Order().Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns))).ToArray())
+            .AddUsings(allUsings)
             .AddMembers(namespaceDeclaration)
             .NormalizeWhitespace();
 

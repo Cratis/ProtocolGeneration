@@ -5,20 +5,18 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
-namespace Interfaces.Products
+namespace Interfaces.Products;
+[ServiceContract]
+public interface IProductsService
 {
-    [ServiceContract]
-    public interface IProductsService
-    {
-        [OperationContract]
-        Task<CommandResult> CreateProduct(CreateProduct command);
-        [OperationContract]
-        Task<Product> GetProduct(GetProduct command);
-        [OperationContract]
-        Task<IEnumerable<Product>> GetProducts(GetProducts command);
-        [OperationContract]
-        IAsyncEnumerable<Product> GetProductUpdates(GetProductUpdates command);
-        [OperationContract]
-        Task<CommandResult> UpdateProductPrice(UpdateProductPrice command);
-    }
+    [OperationContract]
+    Task<CommandResult> CreateProduct(CreateProduct command);
+    [OperationContract]
+    Task<Product> GetProduct(GetProduct command);
+    [OperationContract]
+    Task<IEnumerable<Product>> GetProducts(GetProducts command);
+    [OperationContract]
+    IAsyncEnumerable<Product> GetProductUpdates(GetProductUpdates command);
+    [OperationContract]
+    Task<CommandResult> UpdateProductPrice(UpdateProductPrice command);
 }

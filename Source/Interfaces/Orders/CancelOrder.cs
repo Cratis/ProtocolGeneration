@@ -4,14 +4,12 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Interfaces.Orders
+namespace Interfaces.Orders;
+/// <summary>Data transfer object for CancelOrder.</summary>
+[DataContract]
+public class CancelOrder
 {
-    /// <summary>Data transfer object for CancelOrder.</summary>
-    [DataContract]
-    public class CancelOrder
-    {
-        /// <summary>Gets or sets the Id.</summary>
-        [DataMember(Order = 1)]
-        public Guid Id { get; set; }
-    }
+    /// <summary>Gets or sets the Id.</summary>
+[DataMember(Order = 1)]
+    public Guid Id { get; set; }
 }

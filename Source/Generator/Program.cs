@@ -22,15 +22,15 @@ var outputOption = new Option<string>(
 
 var baseNamespaceOption = new Option<string>(
     name: "--base-namespace",
-    description: "Base namespace for generated interfaces",
-    getDefaultValue: () => "Interfaces");
+    getDefaultValue: () => "Interfaces",
+    description: "Base namespace for generated interfaces");
 
 var skipSegmentsOption = new Option<int>(
     name: "--skip-segments",
-    description: "Number of namespace segments to skip from source types",
-    getDefaultValue: () => 1);
+    getDefaultValue: () => 1,
+    description: "Number of namespace segments to skip from source types");
 
-rootCommand.AddOption(baseNamespaceOption);
+rootCommand.AddOption(assemblyOption);
 rootCommand.AddOption(outputOption);
 rootCommand.AddOption(baseNamespaceOption);
 rootCommand.AddOption(skipSegmentsOption);

@@ -4,18 +4,16 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Interfaces.Products
-{
-    /// <summary>Data transfer object for UpdateProductPrice.</summary>
+namespace Interfaces.Products;
+/// <summary>Data transfer object for UpdateProductPrice.</summary>
 [DataContract]
-    public class UpdateProductPrice
-    {
-            /// <summary>Gets or sets the Id.</summary>
-    [DataMember(Order = 1)]
-        public Guid Id { get; set; }
+public class UpdateProductPrice
+{
+    /// <summary>Gets or sets the Id.</summary>
+[DataMember(Order = 1)]
+    public Guid Id { get; set; }
 
-            /// <summary>Gets or sets the Price.</summary>
-    [DataMember(Order = 2)]
-        public decimal Price { get; set; }
-    }
+    /// <summary>Gets or sets the Price.</summary>
+[DataMember(Order = 2)]
+    public decimal Price { get; set; }
 }

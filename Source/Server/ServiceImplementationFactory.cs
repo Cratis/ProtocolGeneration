@@ -75,12 +75,9 @@ public class ServiceImplementationFactory(Assembly backendAssembly)
 
             _factory ??= new ServiceImplementationFactory(Assembly.Load("Backend"));
 
-            if (args.Length == 0)
-            {
-                throw new InvalidOperationException("Service methods must have at least one parameter");
-            }
-
-            var parameter = args[0] ?? throw new InvalidOperationException("Service methods must have at least one parameter");
+            var parameter = (args.Length == 0 || args[0] is null)
+                ? throw new InvalidOperationException("Service methods must have at least one non-null parameter")
+                : args[0];
 
             var parameterType = parameter.GetType();
             var backendType = _factory.GetBackendType(parameterType.FullName!);
@@ -155,8 +152,7 @@ public class ServiceImplementationFactory(Assembly backendAssembly)
                 if (queue.TryDequeue(out var item))
                 {
                     // Map backend type to DTO type
-                    var mappedItem = (T)TypeMapper.MapToDto(item!, typeof(T));
-                    yield return mappedItem;
+                    yield return (T)TypeMapper.MapToDto(item!, typeof(T));
                 }
             }
         }

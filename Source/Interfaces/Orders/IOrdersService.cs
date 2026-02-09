@@ -5,20 +5,18 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
-namespace Interfaces.Orders
+namespace Interfaces.Orders;
+[ServiceContract]
+public interface IOrdersService
 {
-    [ServiceContract]
-    public interface IOrdersService
-    {
-        [OperationContract]
-        Task<CommandResult> CancelOrder(CancelOrder command);
-        [OperationContract]
-        Task<Order> GetOrder(GetOrder command);
-        [OperationContract]
-        Task<IEnumerable<Order>> GetOrders(GetOrders command);
-        [OperationContract]
-        IAsyncEnumerable<Order> GetOrderUpdates(GetOrderUpdates command);
-        [OperationContract]
-        Task<CommandResult> PlaceOrder(PlaceOrder command);
-    }
+    [OperationContract]
+    Task<CommandResult> CancelOrder(CancelOrder command);
+    [OperationContract]
+    Task<Order> GetOrder(GetOrder command);
+    [OperationContract]
+    Task<IEnumerable<Order>> GetOrders(GetOrders command);
+    [OperationContract]
+    IAsyncEnumerable<Order> GetOrderUpdates(GetOrderUpdates command);
+    [OperationContract]
+    Task<CommandResult> PlaceOrder(PlaceOrder command);
 }

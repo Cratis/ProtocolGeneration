@@ -4,14 +4,12 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Interfaces.Products
-{
-    /// <summary>Data transfer object for GetProduct.</summary>
+namespace Interfaces.Products;
+/// <summary>Data transfer object for GetProduct.</summary>
 [DataContract]
-    public class GetProduct
-    {
-            /// <summary>Gets or sets the Id.</summary>
-    [DataMember(Order = 1)]
-        public Guid Id { get; set; }
-    }
+public class GetProduct
+{
+    /// <summary>Gets or sets the Id.</summary>
+[DataMember(Order = 1)]
+    public Guid Id { get; set; }
 }
