@@ -7,6 +7,8 @@
   <ItemGroup>
     <PackageReference Include="Cratis.Arc.Core" />
     <PackageReference Include="OneOf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="protobuf-net.Grpc.ClientFactory" />
   </ItemGroup>
 
   <ItemGroup>
