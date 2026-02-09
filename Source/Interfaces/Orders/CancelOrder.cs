@@ -7,11 +7,11 @@ using System.Runtime.Serialization;
 namespace Interfaces.Orders
 {
     /// <summary>Data transfer object for CancelOrder.</summary>
-[DataContract]
+    [DataContract]
     public class CancelOrder
     {
-            /// <summary>Gets or sets the Id.</summary>
-    [DataMember(Order = 1)]
+        /// <summary>Gets or sets the Id.</summary>
+        [DataMember(Order = 1)]
         public Guid Id { get; set; }
     }
 }

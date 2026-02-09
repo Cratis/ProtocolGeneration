@@ -30,12 +30,16 @@ var skipSegmentsOption = new Option<int>(
     description: "Number of namespace segments to skip from source types",
     getDefaultValue: () => 1);
 
-rootCommand.AddOption(assemblyOption);
+rootCommand.AddOption(baseNamespaceOption);
 rootCommand.AddOption(outputOption);
 rootCommand.AddOption(baseNamespaceOption);
 rootCommand.AddOption(skipSegmentsOption);
 
-rootCommand.SetHandler(async (string assembly, string output, string baseNamespace, int skipSegments) =>
+rootCommand.SetHandler(HandleCommand, assemblyOption, outputOption, baseNamespaceOption, skipSegmentsOption);
+
+return await rootCommand.InvokeAsync(args);
+
+static async Task HandleCommand(string assembly, string output, string baseNamespace, int skipSegments)
 {
     try
     {
@@ -45,10 +49,8 @@ rootCommand.SetHandler(async (string assembly, string output, string baseNamespa
     catch (Exception ex)
     {
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.Error.WriteLine($"Error: {ex.Message}");
+        await Console.Error.WriteLineAsync($"Error: {ex.Message}");
         Console.ResetColor();
         Environment.Exit(1);
     }
-}, assemblyOption, outputOption, baseNamespaceOption, skipSegmentsOption);
-
-return await rootCommand.InvokeAsync(args);
+}

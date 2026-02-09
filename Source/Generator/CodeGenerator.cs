@@ -10,20 +10,19 @@ namespace Generator;
 /// <summary>
 /// Generates C# interface code for services.
 /// </summary>
-class CodeGenerator
+sealed class CodeGenerator(string baseNamespace, int skipSegments)
 {
-    readonly string _baseNamespace;
-    readonly int _skipSegments;
-    readonly TypeTransformer _typeTransformer;
-    readonly DtoGenerator _dtoGenerator;
+    static readonly string[] _defaultUsings =
+    [
+        "System.Collections.Generic",
+        "System.ServiceModel",
+        "System.Threading.Tasks"
+    ];
 
-    public CodeGenerator(string baseNamespace, int skipSegments)
-    {
-        _baseNamespace = baseNamespace;
-        _skipSegments = skipSegments;
-        _typeTransformer = new TypeTransformer();
-        _dtoGenerator = new DtoGenerator();
-    }
+    readonly string _baseNamespace = baseNamespace;
+    readonly int _skipSegments = skipSegments;
+    readonly TypeTransformer _typeTransformer = new();
+    readonly DtoGenerator _dtoGenerator = new();
 
     public ServiceDefinition CreateServiceDefinition(string serviceName, List<DiscoveredType> types)
     {
@@ -46,7 +45,7 @@ class CodeGenerator
         }
 
         // Get namespace from the first type and apply skip segments
-        var sourceNamespace = types.First().Namespace;
+        var sourceNamespace = types[0].Namespace;
         var targetNamespace = ApplyNamespaceSkipping(sourceNamespace);
 
         return new ServiceDefinition
@@ -59,10 +58,10 @@ class CodeGenerator
 
     public string GenerateInterfaceCode(ServiceDefinition service)
     {
-        var copyright = @"// Copyright (c) Cratis. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.";
+        const string copyright = "// Copyright (c) Cratis. All rights reserved.\n" +
+            "// Licensed under the MIT license. See LICENSE file in the project root for full license information.";
 
-        var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(
+        var namespaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
             SyntaxFactory.ParseName(service.Namespace));
 
         var interfaceName = $"I{service.ServiceName}Service";
@@ -92,12 +91,8 @@ class CodeGenerator
 
         namespaceDeclaration = namespaceDeclaration.AddMembers(interfaceDeclaration);
 
-        var usingDirectives = new[]
-        {
-            "System.Collections.Generic",
-            "System.ServiceModel",
-            "System.Threading.Tasks"
-        }.Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
+        var usingDirectives = _defaultUsings
+            .Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
 
         var compilationUnit = SyntaxFactory.CompilationUnit()
             .AddUsings(usingDirectives.ToArray())
@@ -107,19 +102,6 @@ class CodeGenerator
         var code = compilationUnit.ToFullString();
 
         return copyright + "\n\n" + code;
-    }
-
-    string ApplyNamespaceSkipping(string sourceNamespace)
-    {
-        var segments = sourceNamespace.Split('.');
-        var remainingSegments = segments.Skip(_skipSegments).ToArray();
-
-        if (remainingSegments.Length == 0)
-        {
-            return _baseNamespace;
-        }
-
-        return $"{_baseNamespace}.{string.Join('.', remainingSegments)}";
     }
 
     public string GetOutputPath(ServiceDefinition service, string outputDirectory)
@@ -153,7 +135,7 @@ class CodeGenerator
         return _dtoGenerator.UpdateDtoNamespace(dto, targetNamespace);
     }
 
-    public string GetDtoOutputPath(DtoDefinition dto, string outputDirectory, string serviceNamespace)
+    public string GetDtoOutputPath(DtoDefinition dto, string outputDirectory)
     {
         // Use the DTO's namespace to determine the path
         var namespaceParts = dto.Namespace.Split('.');
@@ -167,5 +149,18 @@ class CodeGenerator
 
         var fileName = $"{dto.ClassName}.cs";
         return Path.Combine(directory, fileName);
+    }
+
+    string ApplyNamespaceSkipping(string sourceNamespace)
+    {
+        var segments = sourceNamespace.Split('.');
+        var remainingSegments = segments.Skip(_skipSegments).ToArray();
+
+        if (remainingSegments.Length == 0)
+        {
+            return _baseNamespace;
+        }
+
+        return $"{_baseNamespace}.{string.Join('.', remainingSegments)}";
     }
 }

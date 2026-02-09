@@ -1,0 +1,12 @@
+[
+    {
+        "name": "Server",
+        "path": "${workspaceFolder}/Source/Server",
+        "outputPath": "${workspaceFolder}/Source/Server/bin/Debug/net10.0/Server.dll"
+    },
+    {
+        "name": "Client",
+        "path": "${workspaceFolder}/Source/Clients",
+        "outputPath": "${workspaceFolder}/Source/Clients/bin/Debug/net10.0/Client.dll"
+    }
+]

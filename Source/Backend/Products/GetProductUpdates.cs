@@ -2,15 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reactive.Subjects;
-
+using Cratis.Arc.Queries.ModelBound;
 
 namespace Backend.Products;
 
 /// <summary>
 /// Observable query to get product updates.
 /// </summary>
-[BelongsTo("Products")]
-[ObservableQuery]
+[ReadModel]
 public class GetProductUpdates
 {
     /// <summary>

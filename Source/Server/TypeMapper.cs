@@ -224,7 +224,7 @@ public static class TypeMapper
         }
 
         // Get Value0, Value1, etc. properties from source
-        for (int i = 0; i < sourceGenericArgs.Length; i++)
+        for (var i = 0; i < sourceGenericArgs.Length; i++)
         {
             var valueProp = sourceType.GetProperty($"Value{i}");
             if (valueProp != null)
@@ -259,7 +259,7 @@ public static class TypeMapper
 
         // Get value from source using reflection
         // OneOf library has IsT0, IsT1, AsT0, AsT1 properties
-        for (int i = 0; i < sourceGenericArgs.Length; i++)
+        for (var i = 0; i < sourceGenericArgs.Length; i++)
         {
             var isTProp = sourceType.GetProperty($"IsT{i}");
             if (isTProp != null)

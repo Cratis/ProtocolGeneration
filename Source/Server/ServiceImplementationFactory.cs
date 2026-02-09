@@ -9,28 +9,20 @@ namespace Server;
 /// <summary>
 /// Factory for creating service implementations.
 /// </summary>
-public class ServiceImplementationFactory
+public class ServiceImplementationFactory(Assembly backendAssembly)
 {
-    readonly Assembly _backendAssembly;
+    readonly Assembly _backendAssembly = backendAssembly;
     readonly Dictionary<string, Type> _backendTypeCache = new();
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ServiceImplementationFactory"/> class.
-    /// </summary>
-    /// <param name="backendAssembly">The backend assembly containing command and query handlers.</param>
-    public ServiceImplementationFactory(Assembly backendAssembly)
-    {
-        _backendAssembly = backendAssembly;
-    }
 
     /// <summary>
     /// Creates a service implementation for the specified service interface.
     /// </summary>
     /// <typeparam name="TService">The service interface type.</typeparam>
     /// <returns>An implementation of the service interface.</returns>
-    public TService CreateImplementation<TService>() where TService : class
+    public TService CreateImplementation<TService>()
+        where TService : class
     {
-        return DispatchProxy.Create<TService, ServiceProxy>() as TService ?? throw new InvalidOperationException($"Failed to create proxy for {typeof(TService).Name}");
+        return DispatchProxy.Create<TService, ServiceProxy>();
     }
 
     /// <summary>
@@ -66,7 +58,7 @@ public class ServiceImplementationFactory
     /// <summary>
     /// Proxy class that intercepts service method calls.
     /// </summary>
-    class ServiceProxy : DispatchProxy
+    sealed class ServiceProxy : DispatchProxy
     {
         ServiceImplementationFactory? _factory;
 
@@ -78,23 +70,22 @@ public class ServiceImplementationFactory
         /// <returns>The result of the method invocation.</returns>
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
-            if (targetMethod == null)
-            {
-                throw new ArgumentNullException(nameof(targetMethod));
-            }
+            ArgumentNullException.ThrowIfNull(targetMethod);
+            ArgumentNullException.ThrowIfNull(args);
 
             _factory ??= new ServiceImplementationFactory(Assembly.Load("Backend"));
 
-            var parameter = args?[0];
-            if (parameter == null)
+            if (args.Length == 0)
             {
-                throw new ArgumentException("Service methods must have at least one parameter");
+                throw new InvalidOperationException("Service methods must have at least one parameter");
             }
+
+            var parameter = args[0] ?? throw new InvalidOperationException("Service methods must have at least one parameter");
 
             var parameterType = parameter.GetType();
             var backendType = _factory.GetBackendType(parameterType.FullName!);
 
-            if (backendType == null)
+            if (backendType is null)
             {
                 throw new InvalidOperationException($"Backend type not found for {parameterType.FullName}");
             }
@@ -103,11 +94,7 @@ public class ServiceImplementationFactory
             var backendInstance = TypeMapper.MapToBackend(parameter, backendType);
 
             // Find and invoke Handle method
-            var handleMethod = backendType.GetMethod("Handle", BindingFlags.Public | BindingFlags.Instance);
-            if (handleMethod == null)
-            {
-                throw new InvalidOperationException($"Handle method not found on {backendType.FullName}");
-            }
+            var handleMethod = backendType.GetMethod("Handle", BindingFlags.Public | BindingFlags.Instance) ?? throw new InvalidOperationException($"Handle method not found on {backendType.FullName}");
 
             var result = handleMethod.Invoke(backendInstance, null);
 
@@ -124,11 +111,10 @@ public class ServiceImplementationFactory
             if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 var taskResultType = returnType.GetGenericArguments()[0];
-                
-                if (result != null)
+
+                if (result is not null)
                 {
-                    var mappedResult = TypeMapper.MapToDto(result, taskResultType);
-                    return Task.FromResult(mappedResult);
+                    return Task.FromResult(TypeMapper.MapToDto(result, taskResultType));
                 }
 
                 return Task.FromResult<object?>(null);
@@ -140,7 +126,7 @@ public class ServiceImplementationFactory
                 var elementType = returnType.GetGenericArguments()[0];
 
                 // The result from Handle() is ISubject<T>
-                if (result != null)
+                if (result is not null)
                 {
                     var convertMethod = typeof(ServiceProxy).GetMethod(nameof(ConvertSubjectToAsyncEnumerable), BindingFlags.NonPublic | BindingFlags.Static)!;
                     var genericMethod = convertMethod.MakeGenericMethod(elementType);
@@ -154,7 +140,7 @@ public class ServiceImplementationFactory
         static async IAsyncEnumerable<T> ConvertSubjectToAsyncEnumerable<T>(ISubject<T> subject, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queue = new System.Collections.Concurrent.ConcurrentQueue<T>();
-            var semaphore = new SemaphoreSlim(0);
+            using var semaphore = new SemaphoreSlim(0);
 
             using var subscription = subject.Subscribe(item =>
             {

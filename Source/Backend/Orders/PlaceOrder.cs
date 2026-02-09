@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Backend.Products;
-
+using Cratis.Arc.Commands.ModelBound;
 using OneOf;
 
 namespace Backend.Orders;
@@ -10,29 +10,28 @@ namespace Backend.Orders;
 /// <summary>
 /// Command to place a new order.
 /// </summary>
-[BelongsTo("Orders")]
 [Command]
 public class PlaceOrder
 {
     /// <summary>
     /// Gets or sets the order identifier.
     /// </summary>
-    public OrderId Id { get; set; }
+    public required OrderId Id { get; set; }
 
     /// <summary>
     /// Gets or sets the product identifier.
     /// </summary>
-    public ProductId ProductId { get; set; }
+    public required ProductId ProductId { get; set; }
 
     /// <summary>
     /// Gets or sets the quantity to order.
     /// </summary>
-    public Quantity Quantity { get; set; }
+    public required Quantity Quantity { get; set; }
 
     /// <summary>
     /// Gets or sets the delivery preference - either an address string or pickup location int.
     /// </summary>
-    public OneOf<string, int> DeliveryPreference { get; set; }
+    public required OneOf<string, int> DeliveryPreference { get; set; }
 
     /// <summary>
     /// Handles the command execution.

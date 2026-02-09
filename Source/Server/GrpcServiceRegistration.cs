@@ -18,16 +18,13 @@ public static class GrpcServiceRegistration
     public static IServiceCollection AddAutoDiscoveredGrpcServices(this IServiceCollection services)
     {
         // Load assemblies
-        var interfacesAssembly = Assembly.Load("Interfaces");
         var backendAssembly = Assembly.Load("Backend");
 
         // Create factory
         var factory = new ServiceImplementationFactory(backendAssembly);
 
         // Scan for service interfaces
-        var serviceTypes = ServiceScanner.ScanForServices(interfacesAssembly);
-
-        foreach (var serviceType in serviceTypes)
+        foreach (var serviceType in ServiceScanner.ScanForServices(Assembly.Load("Interfaces")))
         {
             // Create implementation instance
             var implementation = factory.CreateImplementation(serviceType);
@@ -48,13 +45,8 @@ public static class GrpcServiceRegistration
     /// <returns>The application builder for chaining.</returns>
     public static IEndpointRouteBuilder MapAutoDiscoveredGrpcServices(this IEndpointRouteBuilder app)
     {
-        // Load interfaces assembly
-        var interfacesAssembly = Assembly.Load("Interfaces");
-
         // Scan for service interfaces
-        var serviceTypes = ServiceScanner.ScanForServices(interfacesAssembly);
-
-        foreach (var serviceType in serviceTypes)
+        foreach (var serviceType in ServiceScanner.ScanForServices(Assembly.Load("Interfaces")))
         {
             // Map the service using reflection
             var mapGrpcServiceMethod = typeof(GrpcEndpointRouteBuilderExtensions)

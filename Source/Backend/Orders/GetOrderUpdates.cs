@@ -3,15 +3,14 @@
 
 using System.Reactive.Subjects;
 using Backend.Products;
-
+using Cratis.Arc.Queries.ModelBound;
 
 namespace Backend.Orders;
 
 /// <summary>
 /// Observable query to get order updates.
 /// </summary>
-[BelongsTo("Orders")]
-[ObservableQuery]
+[ReadModel]
 public class GetOrderUpdates
 {
     /// <summary>

@@ -6,7 +6,7 @@ namespace Generator;
 /// <summary>
 /// Transforms types from their source representation to their interface representation.
 /// </summary>
-class TypeTransformer
+sealed class TypeTransformer
 {
     public string TransformType(Type type, bool isReturnType = false)
     {
@@ -18,14 +18,10 @@ class TypeTransformer
         }
 
         // Handle ConceptAs<T> - unwrap to underlying type
-        if (IsConceptAs(type))
+        if (IsConceptAs(type) && type.BaseType is { IsGenericType: true } baseType)
         {
-            var baseType = type.BaseType;
-            if (baseType != null && baseType.IsGenericType)
-            {
-                var underlyingType = baseType.GetGenericArguments()[0];
-                return TransformType(underlyingType, isReturnType);
-            }
+            var underlyingType = baseType.GetGenericArguments()[0];
+            return TransformType(underlyingType, isReturnType);
         }
 
         // Handle OneOf<T0, T1, ...>
@@ -43,10 +39,9 @@ class TypeTransformer
         }
 
         // Handle nullable value types
-        if (Nullable.GetUnderlyingType(type) != null)
+        if (Nullable.GetUnderlyingType(type) is { } nullableUnderlyingType)
         {
-            var underlyingType = Nullable.GetUnderlyingType(type);
-            return TransformType(underlyingType!, isReturnType) + "?";
+            return TransformType(nullableUnderlyingType, isReturnType) + "?";
         }
 
         // Handle generic types
@@ -91,11 +86,7 @@ class TypeTransformer
         }
 
         // For queries and observable queries, look for a Handle method
-        var handleMethod = commandOrQueryType.GetMethod("Handle");
-        if (handleMethod == null)
-        {
-            throw new InvalidOperationException($"Type '{commandOrQueryType.FullName}' does not have a Handle method");
-        }
+        var handleMethod = commandOrQueryType.GetMethod("Handle") ?? throw new InvalidOperationException($"Type '{commandOrQueryType.FullName}' does not have a Handle method");
 
         var returnType = handleMethod.ReturnType;
 

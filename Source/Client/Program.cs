@@ -9,7 +9,7 @@ using Interfaces.Products;
 using ProtoBuf.Grpc.Client;
 
 var serverAddress = "https://localhost:7000";
-Console.WriteLine($"=== gRPC Test Client ===");
+Console.WriteLine("=== gRPC Test Client ===");
 Console.WriteLine($"Connecting to: {serverAddress}");
 Console.WriteLine();
 
@@ -113,7 +113,7 @@ async Task CreateProduct(IProductsService service)
         Id = productId,
         Name = name,
         Price = price,
-        CreatedAt = DateTimeOffset.UtcNow
+        CreatedAt = ToSerializableDateTimeOffset(DateTimeOffset.UtcNow)
     };
 
     var result = await service.CreateProduct(command);
@@ -196,7 +196,7 @@ async Task GetAllProducts(IProductsService service)
     var products = await service.GetProducts(query);
 
     var productList = products.ToList();
-    if (productList.Any())
+    if (productList.Count > 0)
     {
         Console.WriteLine($"Found {productList.Count} product(s):");
         foreach (var product in productList)
@@ -218,7 +218,7 @@ async Task SubscribeToProductUpdates(IProductsService service)
     Console.WriteLine("Press Ctrl+C to stop early\n");
 
     var query = new GetProductUpdates();
-    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
     try
     {
@@ -358,7 +358,7 @@ async Task GetAllOrders(IOrdersService service)
     var orders = await service.GetOrders(query);
 
     var orderList = orders.ToList();
-    if (orderList.Any())
+    if (orderList.Count > 0)
     {
         Console.WriteLine($"Found {orderList.Count} order(s):");
         foreach (var order in orderList)
@@ -380,7 +380,7 @@ async Task SubscribeToOrderUpdates(IOrdersService service)
     Console.WriteLine("Press Ctrl+C to stop early\n");
 
     var query = new GetOrderUpdates();
-    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
     try
     {
@@ -415,4 +415,13 @@ string PromptForInput(string prompt)
 {
     Console.Write($"{prompt}: ");
     return Console.ReadLine() ?? string.Empty;
+}
+
+SerializableDateTimeOffset ToSerializableDateTimeOffset(DateTimeOffset value)
+{
+    return new SerializableDateTimeOffset
+    {
+        OffsetMinutes = value.Offset.TotalMinutes,
+        Ticks = value.Ticks
+    };
 }

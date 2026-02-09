@@ -4,11 +4,12 @@
 namespace Generator;
 
 /// <summary>
-/// Represents a service with its operations.
+/// Represents a DTO class to be generated.
 /// </summary>
-sealed class ServiceDefinition
+sealed class DtoDefinition
 {
-    public required string ServiceName { get; init; }
+    public required string ClassName { get; init; }
     public required string Namespace { get; init; }
-    public required List<ServiceOperation> Operations { get; init; }
+    public required Type SourceType { get; init; }
+    public required List<DtoProperty> Properties { get; init; }
 }

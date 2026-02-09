@@ -8,20 +8,12 @@ namespace Generator;
 /// <summary>
 /// Main interface generator orchestrator.
 /// </summary>
-class InterfaceGenerator
+sealed class InterfaceGenerator(string assemblyPath, string outputDirectory, string baseNamespace, int skipSegments)
 {
-    readonly string _assemblyPath;
-    readonly string _outputDirectory;
-    readonly string _baseNamespace;
-    readonly int _skipSegments;
-
-    public InterfaceGenerator(string assemblyPath, string outputDirectory, string baseNamespace, int skipSegments)
-    {
-        _assemblyPath = assemblyPath;
-        _outputDirectory = outputDirectory;
-        _baseNamespace = baseNamespace;
-        _skipSegments = skipSegments;
-    }
+    readonly string _assemblyPath = assemblyPath;
+    readonly string _outputDirectory = outputDirectory;
+    readonly string _baseNamespace = baseNamespace;
+    readonly int _skipSegments = skipSegments;
 
     public async Task GenerateAsync()
     {
@@ -101,22 +93,21 @@ class InterfaceGenerator
         // Generate DTOs
         Console.WriteLine("Generating DTOs...");
         var allDtos = new List<DtoDefinition>();
-        
+
         foreach (var (serviceName, types) in serviceGroups)
         {
             var dtos = codeGenerator.DiscoverDtosForTypes(types);
-            
+
             // Update DTO namespaces to match the target namespace structure
-            var serviceNamespace = types.First().Namespace;
-            var updatedDtos = dtos.Select(dto => codeGenerator.UpdateDtoNamespace(dto, serviceNamespace)).ToList();
-            
+            var serviceNamespace = types[0].Namespace;
+            var updatedDtos = dtos.ConvertAll(dto => codeGenerator.UpdateDtoNamespace(dto, serviceNamespace));
+
             allDtos.AddRange(updatedDtos);
         }
 
         // Remove duplicates based on full type name
         var uniqueDtos = allDtos
-            .GroupBy(dto => dto.SourceType.FullName)
-            .Select(g => g.First())
+            .DistinctBy(dto => dto.SourceType.FullName!)
             .ToList();
 
         Console.WriteLine($"Found {uniqueDtos.Count} unique DTO(s) to generate");
@@ -124,7 +115,7 @@ class InterfaceGenerator
         foreach (var dto in uniqueDtos.OrderBy(d => d.ClassName))
         {
             var code = codeGenerator.GenerateDtoCode(dto);
-            var outputPath = codeGenerator.GetDtoOutputPath(dto, _outputDirectory, dto.Namespace);
+            var outputPath = codeGenerator.GetDtoOutputPath(dto, _outputDirectory);
 
             var directory = Path.GetDirectoryName(outputPath)!;
             Directory.CreateDirectory(directory);

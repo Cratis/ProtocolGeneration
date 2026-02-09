@@ -2,21 +2,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Backend.Products;
-
+using Cratis.Arc.Queries.ModelBound;
 
 namespace Backend.Orders;
 
 /// <summary>
 /// Query to get an order by its identifier.
 /// </summary>
-[BelongsTo("Orders")]
-[Query]
+[ReadModel]
 public class GetOrder
 {
     /// <summary>
     /// Gets or sets the order identifier.
     /// </summary>
-    public OrderId Id { get; set; }
+    public required OrderId Id { get; set; }
 
     /// <summary>
     /// Handles the query execution.

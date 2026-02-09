@@ -6,7 +6,7 @@ namespace Generator;
 /// <summary>
 /// Groups discovered types by service and validates namespace consistency.
 /// </summary>
-class ServiceGrouper
+sealed class ServiceGrouper
 {
     public Dictionary<string, List<DiscoveredType>> GroupByService(List<DiscoveredType> types)
     {

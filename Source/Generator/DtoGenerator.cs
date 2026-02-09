@@ -11,7 +11,7 @@ namespace Generator;
 /// <summary>
 /// Generates Data Transfer Object (DTO) classes for commands, queries, and result types.
 /// </summary>
-class DtoGenerator
+sealed class DtoGenerator
 {
     readonly TypeTransformer _typeTransformer;
     readonly HashSet<Type> _generatedTypes = new();
@@ -33,13 +33,13 @@ class DtoGenerator
     public List<DtoDefinition> DiscoverDtosToGenerate(List<DiscoveredType> discoveredTypes)
     {
         var dtosToGenerate = new List<DtoDefinition>();
-        var typesToProcess = new Queue<(Type type, string context)>();
+        var typesToProcess = new Queue<Type>();
 
         // Start with all command and query types
         foreach (var discoveredType in discoveredTypes)
         {
-            typesToProcess.Enqueue((discoveredType.Type, $"Command/Query: {discoveredType.Type.Name}"));
-            
+            typesToProcess.Enqueue(discoveredType.Type);
+
             // Also add their return types
             if (discoveredType.Kind != DiscoveredTypeKind.Command)
             {
@@ -53,7 +53,7 @@ class DtoGenerator
                         returnType = ExtractTypeFromSubject(returnType);
                         if (returnType != null)
                         {
-                            typesToProcess.Enqueue((returnType, $"Result of {discoveredType.Type.Name}"));
+                            typesToProcess.Enqueue(returnType);
                         }
                     }
                 }
@@ -63,7 +63,7 @@ class DtoGenerator
         // Process queue recursively
         while (typesToProcess.Count > 0)
         {
-            var (type, context) = typesToProcess.Dequeue();
+            var type = typesToProcess.Dequeue();
 
             if (ShouldGenerateDto(type))
             {
@@ -79,7 +79,7 @@ class DtoGenerator
                         var propertyType = UnwrapType(property.PropertyType);
                         if (propertyType != null && ShouldGenerateDto(propertyType))
                         {
-                            typesToProcess.Enqueue((propertyType, $"Property {property.Name} of {type.Name}"));
+                            typesToProcess.Enqueue(propertyType);
                         }
                     }
                 }
@@ -102,10 +102,10 @@ class DtoGenerator
 
     public string GenerateDtoCode(DtoDefinition dto)
     {
-        var copyright = @"// Copyright (c) Cratis. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.";
+        const string copyright = "// Copyright (c) Cratis. All rights reserved.\n" +
+            "// Licensed under the MIT license. See LICENSE file in the project root for full license information.";
 
-        var namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(
+        var namespaceDeclaration = SyntaxFactory.FileScopedNamespaceDeclaration(
             SyntaxFactory.ParseName(dto.Namespace));
 
         // Create class with DataContract attribute
@@ -197,23 +197,23 @@ class DtoGenerator
         };
 
         // Add conditional usings based on what types are used
-        if (dto.Properties.Any(p => p.TransformedTypeName.Contains("SerializableDateTimeOffset") || p.TransformedTypeName.Contains("OneOf")))
+        if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("SerializableDateTimeOffset") || p.TransformedTypeName.Contains("OneOf")))
         {
             usingDirectives.Add("Interfaces.Primitives");
         }
 
-        if (dto.Properties.Any(p => p.TransformedTypeName.Contains("IEnumerable") || p.TransformedTypeName.Contains("List")))
+        if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("IEnumerable") || p.TransformedTypeName.Contains("List")))
         {
             usingDirectives.Add("System.Collections.Generic");
         }
 
-        if (dto.Properties.Any(p => p.TransformedTypeName.Contains("Guid")))
+        if (dto.Properties.Exists(p => p.TransformedTypeName.Contains("Guid")))
         {
             usingDirectives.Add("System");
         }
 
         var compilationUnit = SyntaxFactory.CompilationUnit()
-            .AddUsings(usingDirectives.OrderBy(ns => ns).Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns))).ToArray())
+            .AddUsings(usingDirectives.Order().Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns))).ToArray())
             .AddMembers(namespaceDeclaration)
             .NormalizeWhitespace();
 
@@ -244,7 +244,7 @@ class DtoGenerator
             return false;
         }
 
-        if (_excludedTypes.Contains(type.Name) || _excludedTypes.Any(excluded => type.Name.StartsWith(excluded)))
+        if (_excludedTypes.Contains(type.Name) || _excludedTypes.Any(excluded => type.Name.StartsWith(excluded, StringComparison.Ordinal)))
         {
             return false;
         }
@@ -265,17 +265,17 @@ class DtoGenerator
     DtoDefinition? CreateDtoDefinition(Type type)
     {
         var properties = new List<DtoProperty>();
-        
+
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             // Skip properties that return ISubject<T> - these are not for DTOs
-            if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition().Name.StartsWith("ISubject"))
+            if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition().Name.StartsWith("ISubject", StringComparison.Ordinal))
             {
                 continue;
             }
 
             var transformedType = _typeTransformer.TransformType(property.PropertyType);
-            
+
             properties.Add(new DtoProperty
             {
                 Name = property.Name,
@@ -296,20 +296,16 @@ class DtoGenerator
     Type? UnwrapType(Type type)
     {
         // Unwrap ConceptAs<T>
-        if (IsConceptAs(type))
+        if (IsConceptAs(type) && type.BaseType is { IsGenericType: true } baseType)
         {
-            var baseType = type.BaseType;
-            if (baseType != null && baseType.IsGenericType)
-            {
-                return baseType.GetGenericArguments()[0];
-            }
+            return baseType.GetGenericArguments()[0];
         }
 
         // Unwrap collections
         if (type.IsGenericType)
         {
             var genericTypeDef = type.GetGenericTypeDefinition();
-            if (genericTypeDef == typeof(IEnumerable<>) || 
+            if (genericTypeDef == typeof(IEnumerable<>) ||
                 genericTypeDef == typeof(List<>) ||
                 genericTypeDef == typeof(ICollection<>) ||
                 genericTypeDef == typeof(IList<>))
@@ -387,25 +383,4 @@ class DtoGenerator
 
         return false;
     }
-}
-
-/// <summary>
-/// Represents a DTO class to be generated.
-/// </summary>
-class DtoDefinition
-{
-    public required string ClassName { get; init; }
-    public required string Namespace { get; init; }
-    public required Type SourceType { get; init; }
-    public required List<DtoProperty> Properties { get; init; }
-}
-
-/// <summary>
-/// Represents a property in a DTO class.
-/// </summary>
-class DtoProperty
-{
-    public required string Name { get; init; }
-    public required Type OriginalType { get; init; }
-    public required string TransformedTypeName { get; init; }
 }

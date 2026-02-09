@@ -18,7 +18,7 @@ public static class ServiceScanner
     public static IEnumerable<Type> ScanForServices(Assembly assembly)
     {
         return assembly.GetTypes()
-            .Where(t => t.IsInterface && t.GetCustomAttribute<ServiceContractAttribute>() != null);
+            .Where(t => t.IsInterface && Attribute.IsDefined(t, typeof(ServiceContractAttribute)));
     }
 
     /// <summary>
@@ -30,9 +30,9 @@ public static class ServiceScanner
     {
         // DTO: "Interfaces.Products.CreateProduct"
         // Backend: "Backend.Products.CreateProduct"
-        if (dtoTypeName.StartsWith("Interfaces."))
+        if (dtoTypeName.StartsWith("Interfaces.", StringComparison.Ordinal))
         {
-            return "Backend." + dtoTypeName.Substring("Interfaces.".Length);
+            return $"Backend.{dtoTypeName.Substring("Interfaces.".Length)}";
         }
         return dtoTypeName;
     }

@@ -8,47 +8,31 @@ namespace Generator;
 /// <summary>
 /// Analyzes an assembly to discover types with command/query attributes.
 /// </summary>
-class TypeDiscovery
+sealed class TypeDiscovery(Assembly assembly)
 {
     const string CommandAttributeTypeName = "CommandAttribute";
-    const string QueryAttributeTypeName = "QueryAttribute";
-    const string ObservableQueryAttributeTypeName = "ObservableQueryAttribute";
-    const string BelongsToAttributeTypeName = "BelongsToAttribute";
+    const string ReadModelAttributeTypeName = "ReadModelAttribute";
 
-    readonly Assembly _assembly;
-
-    public TypeDiscovery(Assembly assembly)
-    {
-        _assembly = assembly;
-    }
+    readonly Assembly _assembly = assembly;
 
     public List<DiscoveredType> DiscoverTypes()
     {
         var discoveredTypes = new List<DiscoveredType>();
-        var types = _assembly.GetTypes();
 
-        foreach (var type in types)
+        foreach (var type in _assembly.GetTypes())
         {
-            var kind = GetTypeKind(type);
-            if (kind == null)
+            if (GetTypeKind(type) is not { } kind)
             {
                 continue;
             }
 
             var serviceName = GetServiceName(type);
-            if (serviceName == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Warning: Type '{type.FullName}' has a command/query attribute but no [BelongsTo] attribute. Skipping.");
-                Console.ResetColor();
-                continue;
-            }
 
             discoveredTypes.Add(new DiscoveredType
             {
                 Type = type,
                 ServiceName = serviceName,
-                Kind = kind.Value,
+                Kind = kind,
                 Namespace = type.Namespace ?? string.Empty
             });
         }
@@ -58,9 +42,7 @@ class TypeDiscovery
 
     DiscoveredTypeKind? GetTypeKind(Type type)
     {
-        var attributes = type.GetCustomAttributesData();
-
-        foreach (var attribute in attributes)
+        foreach (var attribute in type.GetCustomAttributesData())
         {
             var attributeName = attribute.AttributeType.Name;
 
@@ -69,35 +51,30 @@ class TypeDiscovery
                 return DiscoveredTypeKind.Command;
             }
 
-            if (attributeName == QueryAttributeTypeName)
+            if (attributeName == ReadModelAttributeTypeName)
             {
+                // Check if return type is ISubject<T> to determine if it's observable
+                var handleMethod = type.GetMethod("Handle");
+                if (handleMethod != null)
+                {
+                    var returnType = handleMethod.ReturnType;
+                    if (returnType.IsGenericType && returnType.GetGenericTypeDefinition().Name.StartsWith("ISubject"))
+                    {
+                        return DiscoveredTypeKind.ObservableQuery;
+                    }
+                }
                 return DiscoveredTypeKind.Query;
-            }
-
-            if (attributeName == ObservableQueryAttributeTypeName)
-            {
-                return DiscoveredTypeKind.ObservableQuery;
             }
         }
 
         return null;
     }
 
-    string? GetServiceName(Type type)
+    string GetServiceName(Type type)
     {
-        var attributes = type.GetCustomAttributesData();
-
-        foreach (var attribute in attributes)
-        {
-            if (attribute.AttributeType.Name == BelongsToAttributeTypeName)
-            {
-                if (attribute.ConstructorArguments.Count > 0)
-                {
-                    return attribute.ConstructorArguments[0].Value?.ToString();
-                }
-            }
-        }
-
-        return null;
+        // Extract service name from namespace: Backend.Products -> Products
+        var ns = type.Namespace ?? string.Empty;
+        var parts = ns.Split('.');
+        return parts.Length > 1 ? parts[^1] : "Default";
     }
 }

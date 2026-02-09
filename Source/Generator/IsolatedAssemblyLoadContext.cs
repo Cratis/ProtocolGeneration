@@ -9,21 +9,16 @@ namespace Generator;
 /// <summary>
 /// Custom assembly load context for isolating loaded assemblies.
 /// </summary>
-class IsolatedAssemblyLoadContext : AssemblyLoadContext
+sealed class IsolatedAssemblyLoadContext(string assemblyPath) : AssemblyLoadContext(isCollectible: true)
 {
-    readonly AssemblyDependencyResolver _resolver;
-
-    public IsolatedAssemblyLoadContext(string assemblyPath) : base(isCollectible: true)
-    {
-        _resolver = new AssemblyDependencyResolver(assemblyPath);
-    }
+    readonly AssemblyDependencyResolver _resolver = new(assemblyPath);
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        var assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
-        if (assemblyPath != null)
+        var resolvedPath = _resolver.ResolveAssemblyToPath(assemblyName);
+        if (resolvedPath != null)
         {
-            return LoadFromAssemblyPath(assemblyPath);
+            return LoadFromAssemblyPath(resolvedPath);
         }
 
         return null;

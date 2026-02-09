@@ -2,15 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Backend.Products;
-
+using Cratis.Arc.Queries.ModelBound;
 
 namespace Backend.Orders;
 
 /// <summary>
 /// Query to get all orders.
 /// </summary>
-[BelongsTo("Orders")]
-[Query]
+[ReadModel]
 public class GetOrders
 {
     /// <summary>
