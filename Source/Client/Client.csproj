@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <<ProjectReference Include="../Interfaces/Interfaces.cs" />
+    <ProjectReference Include="../Interfaces/Interfaces.csproj" />
   </ItemGroup>
 
 </Project>
