@@ -97,8 +97,46 @@ class InterfaceGenerator
         }
 
         Console.WriteLine();
+
+        // Generate DTOs
+        Console.WriteLine("Generating DTOs...");
+        var allDtos = new List<DtoDefinition>();
+        
+        foreach (var (serviceName, types) in serviceGroups)
+        {
+            var dtos = codeGenerator.DiscoverDtosForTypes(types);
+            
+            // Update DTO namespaces to match the target namespace structure
+            var serviceNamespace = types.First().Namespace;
+            var updatedDtos = dtos.Select(dto => codeGenerator.UpdateDtoNamespace(dto, serviceNamespace)).ToList();
+            
+            allDtos.AddRange(updatedDtos);
+        }
+
+        // Remove duplicates based on full type name
+        var uniqueDtos = allDtos
+            .GroupBy(dto => dto.SourceType.FullName)
+            .Select(g => g.First())
+            .ToList();
+
+        Console.WriteLine($"Found {uniqueDtos.Count} unique DTO(s) to generate");
+
+        foreach (var dto in uniqueDtos.OrderBy(d => d.ClassName))
+        {
+            var code = codeGenerator.GenerateDtoCode(dto);
+            var outputPath = codeGenerator.GetDtoOutputPath(dto, _outputDirectory, dto.Namespace);
+
+            var directory = Path.GetDirectoryName(outputPath)!;
+            Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(outputPath, code);
+
+            Console.WriteLine($"  ✓ Generated {Path.GetRelativePath(_outputDirectory, outputPath)}");
+        }
+
+        Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"✓ Successfully generated {serviceGroups.Count} service interface(s)");
+        Console.WriteLine($"✓ Successfully generated {serviceGroups.Count} service interface(s) and {uniqueDtos.Count} DTO(s)");
         Console.ResetColor();
     }
 

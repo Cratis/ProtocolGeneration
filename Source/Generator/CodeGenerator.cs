@@ -15,12 +15,14 @@ class CodeGenerator
     readonly string _baseNamespace;
     readonly int _skipSegments;
     readonly TypeTransformer _typeTransformer;
+    readonly DtoGenerator _dtoGenerator;
 
     public CodeGenerator(string baseNamespace, int skipSegments)
     {
         _baseNamespace = baseNamespace;
         _skipSegments = skipSegments;
         _typeTransformer = new TypeTransformer();
+        _dtoGenerator = new DtoGenerator();
     }
 
     public ServiceDefinition CreateServiceDefinition(string serviceName, List<DiscoveredType> types)
@@ -139,6 +141,38 @@ class CodeGenerator
         }
 
         var fileName = $"I{service.ServiceName}Service.cs";
+        return Path.Combine(directory, fileName);
+    }
+
+    public List<DtoDefinition> DiscoverDtosForTypes(List<DiscoveredType> types)
+    {
+        return _dtoGenerator.DiscoverDtosToGenerate(types);
+    }
+
+    public string GenerateDtoCode(DtoDefinition dto)
+    {
+        return _dtoGenerator.GenerateDtoCode(dto);
+    }
+
+    public DtoDefinition UpdateDtoNamespace(DtoDefinition dto, string sourceNamespace)
+    {
+        var targetNamespace = ApplyNamespaceSkipping(sourceNamespace);
+        return _dtoGenerator.UpdateDtoNamespace(dto, targetNamespace);
+    }
+
+    public string GetDtoOutputPath(DtoDefinition dto, string outputDirectory, string serviceNamespace)
+    {
+        // Use the DTO's namespace to determine the path
+        var namespaceParts = dto.Namespace.Split('.');
+        var pathParts = namespaceParts.Skip(_skipSegments).ToArray();
+
+        var directory = outputDirectory;
+        if (pathParts.Length > 0)
+        {
+            directory = Path.Combine(outputDirectory, Path.Combine(pathParts));
+        }
+
+        var fileName = $"{dto.ClassName}.cs";
         return Path.Combine(directory, fileName);
     }
 }
