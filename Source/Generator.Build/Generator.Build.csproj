@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.ProtocolGeneration.Generator.Build</AssemblyName>
+        <OutputType>Exe</OutputType>
+        <NoPackageAnalysis>true</NoPackageAnalysis>
+        <BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
+        <NoWarn>$(NoWarn);NU5118</NoWarn>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.CommandLine" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Cratis.Fundamentals" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="build\*" PackagePath="build\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Build.Framework" />
+        <PackageReference Include="Microsoft.Build.Utilities.Core" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)../Generator/**/*.cs" Exclude="../Generator/obj/**/*.cs;../Generator/bin/**/*.cs"/>
+    </ItemGroup>
+
+    <!-- Copy dependency files during pack using resolved assembly references -->
+    <Target Name="IncludeDependencyFiles" BeforeTargets="GenerateNuspec" AfterTargets="ResolveReferences">
+        <Message Importance="High" Text="Including dependency files in the NuGet package..." />
+        <ItemGroup>
+            <!-- Find the actual resolved assemblies -->
+            <CommandLineAssembly Include="@(ReferencePath)" Condition="'%(Filename)' == 'System.CommandLine'" />
+            <CodeAnalysisAssembly Include="@(ReferencePath)" Condition="'%(Filename)' == 'Microsoft.CodeAnalysis.CSharp'" />
+            <FundamentalsAssembly Include="@(ReferencePath)" Condition="'%(Filename)' == 'Cratis.Fundamentals'" />
+        </ItemGroup>
+
+        <ItemGroup>
+            <!-- Include the resolved assemblies in net9.0 task folder -->
+            <Content Include="@(CommandLineAssembly)" PackagePath="tasks/net9.0/" />
+            <Content Include="@(CodeAnalysisAssembly)" PackagePath="tasks/net9.0/" />
+            <Content Include="@(FundamentalsAssembly)" PackagePath="tasks/net9.0/" />
+        </ItemGroup>
+    </Target>
+
+    <!-- Include output from the Generator -->
+    <ItemGroup>
+        <Content Include="$(MSBuildThisFileDirectory)bin/$(Configuration)/net9.0/**/*" PackagePath="tasks/net9.0" />
+    </ItemGroup>
+</Project>
