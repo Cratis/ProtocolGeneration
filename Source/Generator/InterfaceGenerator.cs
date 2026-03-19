@@ -1,0 +1,140 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Reflection;
+
+namespace Generator;
+
+/// <summary>
+/// Main interface generator orchestrator.
+/// </summary>
+sealed class InterfaceGenerator(string assemblyPath, string outputDirectory, string baseNamespace, int skipSegments)
+{
+    readonly string _assemblyPath = assemblyPath;
+    readonly string _outputDirectory = outputDirectory;
+    readonly string _baseNamespace = baseNamespace;
+    readonly int _skipSegments = skipSegments;
+
+    public async Task GenerateAsync()
+    {
+        Console.WriteLine("Protocol Interface Generator");
+        Console.WriteLine("============================");
+        Console.WriteLine();
+
+        // Validate assembly path
+        if (!File.Exists(_assemblyPath))
+        {
+            throw new FileNotFoundException($"Assembly not found: {_assemblyPath}");
+        }
+
+        Console.WriteLine($"Assembly: {_assemblyPath}");
+        Console.WriteLine($"Output: {_outputDirectory}");
+        Console.WriteLine($"Base Namespace: {_baseNamespace}");
+        Console.WriteLine($"Skip Segments: {_skipSegments}");
+        Console.WriteLine();
+
+        // Load assembly
+        Console.WriteLine("Loading assembly...");
+        var assembly = LoadAssembly(_assemblyPath);
+
+        // Discover types
+        Console.WriteLine("Discovering types...");
+        var discovery = new TypeDiscovery(assembly);
+        var discoveredTypes = discovery.DiscoverTypes();
+
+        if (discoveredTypes.Count == 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Warning: No types with [Command], [Query], or [ObservableQuery] attributes found.");
+            Console.ResetColor();
+            return;
+        }
+
+        Console.WriteLine($"Found {discoveredTypes.Count} command/query types");
+        Console.WriteLine();
+
+        // Group by service
+        var grouper = new ServiceGrouper();
+        var serviceGroups = grouper.GroupByService(discoveredTypes);
+
+        Console.WriteLine($"Grouped into {serviceGroups.Count} service(s):");
+        foreach (var serviceName in serviceGroups.Keys)
+        {
+            Console.WriteLine($"  - {serviceName} ({serviceGroups[serviceName].Count} operations)");
+        }
+        Console.WriteLine();
+
+        // Validate namespace consistency
+        Console.WriteLine("Validating namespace consistency...");
+        grouper.ValidateNamespaceConsistency(serviceGroups);
+        Console.WriteLine("✓ All services have consistent namespaces");
+        Console.WriteLine();
+
+        // Generate code
+        Console.WriteLine("Generating interfaces...");
+        var codeGenerator = new CodeGenerator(_baseNamespace, _skipSegments);
+
+        foreach (var (serviceName, types) in serviceGroups)
+        {
+            var serviceDefinition = codeGenerator.CreateServiceDefinition(serviceName, types);
+            var code = codeGenerator.GenerateInterfaceCode(serviceDefinition);
+            var outputPath = codeGenerator.GetOutputPath(serviceDefinition, _outputDirectory);
+
+            var directory = Path.GetDirectoryName(outputPath)!;
+            Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(outputPath, code);
+
+            Console.WriteLine($"  ✓ Generated {Path.GetRelativePath(_outputDirectory, outputPath)}");
+        }
+
+        Console.WriteLine();
+
+        // Generate DTOs
+        Console.WriteLine("Generating DTOs...");
+        var allDtos = new List<DtoDefinition>();
+
+        foreach (var (serviceName, types) in serviceGroups)
+        {
+            var dtos = codeGenerator.DiscoverDtosForTypes(types);
+
+            // Update DTO namespaces to match the target namespace structure
+            var serviceNamespace = types[0].Namespace;
+            var updatedDtos = dtos.ConvertAll(dto => codeGenerator.UpdateDtoNamespace(dto, serviceNamespace));
+
+            allDtos.AddRange(updatedDtos);
+        }
+
+        // Remove duplicates based on full type name
+        var uniqueDtos = allDtos
+            .DistinctBy(dto => dto.SourceType.FullName!)
+            .ToList();
+
+        Console.WriteLine($"Found {uniqueDtos.Count} unique DTO(s) to generate");
+
+        foreach (var dto in uniqueDtos.OrderBy(d => d.ClassName))
+        {
+            var code = codeGenerator.GenerateDtoCode(dto);
+            var outputPath = codeGenerator.GetDtoOutputPath(dto, _outputDirectory);
+
+            var directory = Path.GetDirectoryName(outputPath)!;
+            Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(outputPath, code);
+
+            Console.WriteLine($"  ✓ Generated {Path.GetRelativePath(_outputDirectory, outputPath)}");
+        }
+
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"✓ Successfully generated {serviceGroups.Count} service interface(s) and {uniqueDtos.Count} DTO(s)");
+        Console.ResetColor();
+    }
+
+    Assembly LoadAssembly(string assemblyPath)
+    {
+        var fullPath = Path.GetFullPath(assemblyPath);
+        var loadContext = new IsolatedAssemblyLoadContext(fullPath);
+        return loadContext.LoadFromAssemblyPath(fullPath);
+    }
+}

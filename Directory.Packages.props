@@ -5,22 +5,29 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- gRPC and Protobuf -->
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.69.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.69.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.2.5" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageVersion Include="protobuf-net.Grpc.ClientFactory" Version="1.2.2" />
     <PackageVersion Include="protobuf-net.BuildTools" Version="3.2.52">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
     <!-- System -->
     <PackageVersion Include="System.Reactive" Version="6.1.0" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageVersion Include="System.Text.Json" Version="10.0.2" />
     <!-- Cratis -->
     <PackageVersion Include="Cratis.Fundamentals" Version="7.5.0" />
     <PackageVersion Include="Cratis.Arc" Version="19.0.3" />
     <PackageVersion Include="Cratis.Arc.Core" Version="19.0.3" />
     <!-- Roslyn-->
+    <PackageVersion Include="Microsoft.Build.Framework" Version="17.13.0" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.13.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
     <!-- Analysis -->
@@ -30,5 +37,6 @@
     <PackageVersion Include="Meziantou.Analyzer" Version="2.0.298" />
     <!-- Not categorized -->
     <PackageVersion Include="OneOf" Version="3.0.271" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 </Project>

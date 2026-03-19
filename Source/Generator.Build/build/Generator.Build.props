@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <!-- Enable or disable the protocol generator -->
+        <ProtocolGenerator_Enabled Condition="'$(ProtocolGenerator_Enabled)' == ''">true</ProtocolGenerator_Enabled>
+        
+        <!-- Number of namespace segments to skip from the assembly name when generating the base namespace -->
+        <ProtocolGenerator_SkipSegments Condition="'$(ProtocolGenerator_SkipSegments)' == ''">1</ProtocolGenerator_SkipSegments>
+        
+        <!-- Base namespace for generated interfaces -->
+        <ProtocolGenerator_BaseNamespace Condition="'$(ProtocolGenerator_BaseNamespace)' == ''">Interfaces</ProtocolGenerator_BaseNamespace>
+        
+        <!-- Output path for generated files -->
+        <ProtocolGenerator_OutputPath Condition="'$(ProtocolGenerator_OutputPath)' == ''">$(ProjectDir)../Interfaces/Generated</ProtocolGenerator_OutputPath>
+    </PropertyGroup>
+</Project>

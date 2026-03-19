@@ -7,10 +7,12 @@
   <ItemGroup>
     <PackageReference Include="Cratis.Arc.Core" />
     <PackageReference Include="OneOf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="protobuf-net.Grpc.ClientFactory" />
   </ItemGroup>
 
   <ItemGroup>
-    <<ProjectReference Include="../Interfaces/Interfaces.cs" />
+    <ProjectReference Include="../Interfaces/Interfaces.csproj" />
   </ItemGroup>
 
 </Project>

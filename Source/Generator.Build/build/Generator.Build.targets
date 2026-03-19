@@ -1,0 +1,22 @@
+<Project>
+    <UsingTask TaskName="GenerateProtocolInterfacesTask" AssemblyFile="$(MSBuildThisFileDirectory)../tasks/net9.0/Cratis.ProtocolGeneration.Generator.Build.dll" />
+
+    <Target Name="GenerateProtocolInterfaces" 
+            BeforeTargets="CoreCompile" 
+            Condition="'$(ProtocolGenerator_Enabled)' == 'true'">
+        
+        <PropertyGroup>
+            <_ProtocolGeneratorExe>$(MSBuildThisFileDirectory)../tasks/net9.0/Cratis.ProtocolGeneration.Generator.Build.dll</_ProtocolGeneratorExe>
+        </PropertyGroup>
+
+        <Message Importance="High" Text="Running Protocol Generator..." />
+        <Message Importance="High" Text="  Assembly: $(TargetPath)" />
+        <Message Importance="High" Text="  Output: $(ProtocolGenerator_OutputPath)" />
+        <Message Importance="High" Text="  Base Namespace: $(ProtocolGenerator_BaseNamespace)" />
+        <Message Importance="High" Text="  Skip Segments: $(ProtocolGenerator_SkipSegments)" />
+
+        <Exec Command="dotnet &quot;$(_ProtocolGeneratorExe)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(ProtocolGenerator_OutputPath)&quot; --base-namespace &quot;$(ProtocolGenerator_BaseNamespace)&quot; --skip-segments $(ProtocolGenerator_SkipSegments)"
+              Condition="Exists('$(TargetPath)')"
+              ContinueOnError="false" />
+    </Target>
+</Project>
