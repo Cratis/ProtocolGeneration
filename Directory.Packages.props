@@ -37,6 +37,6 @@
     <PackageVersion Include="Meziantou.Analyzer" Version="2.0.298" />
     <!-- Not categorized -->
     <PackageVersion Include="OneOf" Version="3.0.271" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageVersion Include="System.CommandLine" Version="3.0.0-preview.7.26381.103" />
   </ItemGroup>
 </Project>

@@ -6,38 +6,47 @@ using Generator;
 
 var rootCommand = new RootCommand("Protocol Interface Generator - Generates gRPC service interfaces from annotated types");
 
-var assemblyOption = new Option<string>(
-    name: "--assembly",
-    description: "Path to the assembly to analyze")
+var assemblyOption = new Option<string>("--assembly")
 {
-    IsRequired = true
+    Description = "Path to the assembly to analyze",
+    Required = true
 };
 
-var outputOption = new Option<string>(
-    name: "--output",
-    description: "Output directory for generated interfaces")
+var outputOption = new Option<string>("--output")
 {
-    IsRequired = true
+    Description = "Output directory for generated interfaces",
+    Required = true
 };
 
-var baseNamespaceOption = new Option<string>(
-    name: "--base-namespace",
-    getDefaultValue: () => "Interfaces",
-    description: "Base namespace for generated interfaces");
+var baseNamespaceOption = new Option<string>("--base-namespace")
+{
+    Description = "Base namespace for generated interfaces",
+    DefaultValueFactory = _ => "Interfaces"
+};
 
-var skipSegmentsOption = new Option<int>(
-    name: "--skip-segments",
-    getDefaultValue: () => 1,
-    description: "Number of namespace segments to skip from source types");
+var skipSegmentsOption = new Option<int>("--skip-segments")
+{
+    Description = "Number of namespace segments to skip from source types",
+    DefaultValueFactory = _ => 1
+};
 
-rootCommand.AddOption(assemblyOption);
-rootCommand.AddOption(outputOption);
-rootCommand.AddOption(baseNamespaceOption);
-rootCommand.AddOption(skipSegmentsOption);
+rootCommand.Options.Add(assemblyOption);
+rootCommand.Options.Add(outputOption);
+rootCommand.Options.Add(baseNamespaceOption);
+rootCommand.Options.Add(skipSegmentsOption);
 
-rootCommand.SetHandler(HandleCommand, assemblyOption, outputOption, baseNamespaceOption, skipSegmentsOption);
+rootCommand.SetAction(async (parseResult, cancellationToken) =>
+{
+    var assembly = parseResult.GetValue(assemblyOption)!;
+    var output = parseResult.GetValue(outputOption)!;
+    var baseNamespace = parseResult.GetValue(baseNamespaceOption) ?? "Interfaces";
+    var skipSegments = parseResult.GetValue(skipSegmentsOption);
 
-return await rootCommand.InvokeAsync(args);
+    await HandleCommand(assembly, output, baseNamespace, skipSegments);
+});
+
+var parseResult = rootCommand.Parse(args);
+return await parseResult.InvokeAsync();
 
 static async Task HandleCommand(string assembly, string output, string baseNamespace, int skipSegments)
 {
